@@ -3,6 +3,8 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+
+//Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 function generateRandomString(len = 6, charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
   let randomString = '';
   for (let i = 0; i < len; i++) {
@@ -25,14 +27,25 @@ const urlDatabase = {
 app.use(express.urlencoded({ extended: true }));
 
 app.post("/urls", (req, res) => {
-  const randomString = generateRandomString(); // Generate a random string
-  const longURL = req.body.longURL; // Get the long URL from the request body
-  urlDatabase[randomString] = longURL; // Save the longURL in the urlDatabase with the generated randomString as key
-  res.redirect(`/urls/${randomString}`); // Redirect to the newly created URL page
+  const randomString = generateRandomString();
+  const longURL = req.body.longURL;
+  urlDatabase[randomString] = longURL; // longURL in urlDatabase
+  res.redirect(`/urls/${randomString}`); // redirect 
 });
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
+});
+
+// Extract shortURL -> Look up longURL corresponding shortURL in urlDatabase
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];
+  if (longURL) {
+    res.redirect(longURL);
+  res.redirect(longURL);
+  }
 });
 
 app.get("/", (req, res) => {
@@ -59,7 +72,6 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { id: id, longURL: longURL };
   res.render("urls_show", templateVars);
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
