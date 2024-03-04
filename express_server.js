@@ -5,6 +5,7 @@ const PORT = 8080; // default port 8080
 
 
 //Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+
 function generateRandomString(len = 6, charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
   let randomString = '';
   for (let i = 0; i < len; i++) {
@@ -44,7 +45,8 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[shortURL];
   if (longURL) {
     res.redirect(longURL);
-  res.redirect(longURL);
+  } else {
+    res.status(404).send("SHORT URL NOT FOUND");
   }
 });
 
