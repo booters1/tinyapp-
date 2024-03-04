@@ -9,6 +9,8 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+//This needs to come before all of our routes
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
