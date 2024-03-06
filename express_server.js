@@ -49,6 +49,27 @@ app.get("/u/:id", (req, res) => {
     res.status(404).send("SHORT URL NOT FOUND");
   }
 });
+// Edit route
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const newLongURL = req.body.newLongURL; 
+
+  if (urlDatabase[id]) {
+    urlDatabase[id] = newLongURL;
+    res.redirect("/urls");
+  } else {
+    res.status(404).send("Short URL not found");
+  }
+});
+
+// Delete route
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id; 
+  if (urlDatabase[id]) {
+    delete urlDatabase[id];
+  }
+  res.redirect("/urls");
+});
 
 app.get("/", (req, res) => {
   res.send("Hello!");
