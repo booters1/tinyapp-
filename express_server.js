@@ -1,8 +1,11 @@
 
 const express = require("express");
+
 const app = express();
 const PORT = 8080; // default port 8080
 
+// middleware form data
+app.use(express.urlencoded({ extended: true }));
 
 //Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 
@@ -85,14 +88,31 @@ app.get("/hello", (req, res) => {
   res.render("hello_world", templateVars);
 });
 
+//route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// route for login -> get username from input, cookie + redirect
+app.post("/login", (req, res) => {
+  const username  = req.body.username;
+  res.cookie("username", username); 
+  res.redirect("/urls"); 
+});
+
+//logged in route
+app.get("/urls", (req, res) => {
+  const username = req.cookies.username || 'Guest';
+  res.render("urls_index", { username: username });
+});
+
+//route for displaying speicifc URL
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id]; 
+ // const username = req.cookies.username || 'Guest';
   const templateVars = { id: id, longURL: longURL };
+  // const templateVars = { id: id, longURL: longURL };
   res.render("urls_show", templateVars);
 });
 
