@@ -39,6 +39,10 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${randomString}`); // redirect 
 });
 
+// app.get("/urls", (req, res) => {
+//   const templateVars = { urls: urlDatabase };
+//   res.render("urls_index", templateVars);
+// });
 
 // Extract shortURL -> Look up longURL corresponding shortURL in urlDatabase
 app.get("/u/:id", (req, res) => {
@@ -114,6 +118,12 @@ app.get("/urls/:id", (req, res) => {
   const longURL = urlDatabase[id]; 
   const templateVars = { id: id, longURL: longURL };
   res.render("urls_show", templateVars);
+});
+
+// route for logout (clears cookies and redirect)
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
 });
 
 

@@ -22,9 +22,11 @@
         <div class ="ml-auto text-light">
         <% if (username) { %>
           <span class="mr-2">logged in as: <%= username %></span>
-        <% } %>
+          <form style="display: inline;" method="POST" action="/logout">
+            <button type="submit" class="btn btn-dark ml-2">Logout</button>
+          </form>
       </div>
-      <% if (!username) { %>
+      <% } else { %>
 
         <form class="form-inline ml-auto" method="POST" action="/login">
           <div class="form-group">
