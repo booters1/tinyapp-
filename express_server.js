@@ -1,11 +1,13 @@
 
 const express = require("express");
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = 8080; // default port 8080
 
 // middleware form data
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 //Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 
@@ -27,8 +29,8 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-//This needs to come before all of our routes
-app.use(express.urlencoded({ extended: true }));
+
+
 
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
@@ -37,10 +39,6 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${randomString}`); // redirect 
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
-});
 
 // Extract shortURL -> Look up longURL corresponding shortURL in urlDatabase
 app.get("/u/:id", (req, res) => {
@@ -97,22 +95,24 @@ app.get("/urls/new", (req, res) => {
 app.post("/login", (req, res) => {
   const username  = req.body.username;
   res.cookie("username", username); 
+  console.log("Username cookie set:", username); // CHECK!!!!
   res.redirect("/urls"); 
 });
 
-//logged in route
+// logged in route
 app.get("/urls", (req, res) => {
-  const username = req.cookies.username || 'Guest';
-  res.render("urls_index", { username: username });
+  const templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+  };
+  res.render("urls_index", templateVars);
 });
 
 //route for displaying speicifc URL
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id]; 
- // const username = req.cookies.username || 'Guest';
   const templateVars = { id: id, longURL: longURL };
-  // const templateVars = { id: id, longURL: longURL };
   res.render("urls_show", templateVars);
 });
 
