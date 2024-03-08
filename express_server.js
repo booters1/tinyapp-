@@ -1,8 +1,14 @@
 
 const express = require("express");
+const cookieParser = require('cookie-parser');
+const users = {};
+
 const app = express();
 const PORT = 8080; // default port 8080
 
+// middleware form data
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 //Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 
@@ -24,8 +30,8 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-//This needs to come before all of our routes
-app.use(express.urlencoded({ extended: true }));
+
+
 
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
@@ -34,10 +40,10 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${randomString}`); // redirect 
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
-});
+// app.get("/urls", (req, res) => {
+//   const templateVars = { urls: urlDatabase };
+//   res.render("urls_index", templateVars);
+// });
 
 // Extract shortURL -> Look up longURL corresponding shortURL in urlDatabase
 app.get("/u/:id", (req, res) => {
@@ -85,17 +91,95 @@ app.get("/hello", (req, res) => {
   res.render("hello_world", templateVars);
 });
 
+//route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { email: req.cookies.email };
+  res.render("urls_new", templateVars);
 });
 
+// route for login 
+app.post("/login", (req, res) => {
+  const { email, password} = req.body;
+  const user = getUserByEmail(email);
+  
+  if (!user) {
+    res.status(403).send("User is not in database.");
+    return;
+  }
+
+  if (user.password !== password) {
+    res.status(403).send("Invalid password. PLease try again.");
+    return;
+  }
+
+  res.cookie("email", email);
+  res.redirect("/urls");
+});
+
+// logged in route
+app.get("/urls", (req, res) => {
+  const templateVars = {
+    email: req.cookies["email"],
+    urls: urlDatabase
+  };
+  res.render("urls_index", templateVars);
+});
+
+//route for displaying speicifc URL
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id]; 
-  const templateVars = { id: id, longURL: longURL };
+  // const templateVars = { id: id, longURL: longURL };
+  const templateVars = { id: id, longURL: longURL, email: req.cookies.email };
   res.render("urls_show", templateVars);
 });
 
+// route for logout (clears cookies and redirect)
+app.post("/logout", (req, res) => {
+  res.clearCookie("email");
+  res.redirect("/login");
+});
+
+//route for register
+app.get("/register", (req, res) => {
+  res.render("register", {email: req.cookies.email });
+});
+
+// route for registration form
+// checks for email registrated 
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).send("Both email and password fields are required.");
+  }
+  res.cookie("email", email);
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return res.status(400).send("Email already registered");
+    }
+  }
+  const userId = generateRandomString();
+  users[userId] = { id: userId, email, password};
+  res.cookie("email", email);
+  res.redirect("/urls");
+});
+
+// email looker upper
+const getUserByEmail = (email) => {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null; // Return null if user not found
+};
+
+
+//route for login 
+app.get("/login", (req, res) => {
+  res.render("login", { email: ""});
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
