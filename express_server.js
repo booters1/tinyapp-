@@ -97,12 +97,23 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// route for login -> get username from input, cookie + redirect
+// route for login 
 app.post("/login", (req, res) => {
-  const username  = req.body.username;
-  res.cookie("username", username); 
-  console.log("Username cookie set:", username); // CHECK!!!!
-  res.redirect("/urls"); 
+  const { email, password} = req.body;
+  const user = getUserByEmail(email);
+  
+  if (!user) {
+    res.status(403).send("User is not in database.");
+    return;
+  }
+
+  if (user.password !== password) {
+    res.status(403).send("Invalid password. PLease try again.");
+    return;
+  }
+
+  res.cookie("email", email);
+  res.redirect("/urls");
 });
 
 // logged in route
@@ -125,13 +136,13 @@ app.get("/urls/:id", (req, res) => {
 
 // route for logout (clears cookies and redirect)
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
+  res.clearCookie("email");
+  res.redirect("/login");
 });
 
 //route for register
 app.get("/register", (req, res) => {
-  res.render("register");
+  res.render("register", {email: req.cookies.email });
 });
 
 // route for registration form
@@ -141,7 +152,7 @@ app.post("/register", (req, res) => {
   if (!email || !password) {
     return res.status(400).send("Both email and password fields are required.");
   }
-  res.cookie("email, email");
+  res.cookie("email", email);
   for (const userId in users) {
     if (users[userId].email === email) {
       return res.status(400).send("Email already registered");
@@ -154,14 +165,16 @@ app.post("/register", (req, res) => {
 });
 
 // email looker upper
-function getUserByEmail(email) {
+const getUserByEmail = (email) => {
   for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
+    const user = users[userId];
+    if (user.email === email) {
+      return user;
     }
   }
-  return null;
-}
+  return null; // Return null if user not found
+};
+
 
 //route for login 
 app.get("/login", (req, res) => {
