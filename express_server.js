@@ -92,7 +92,8 @@ app.get("/hello", (req, res) => {
 
 //route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 // route for login -> get username from input, cookie + redirect
@@ -116,7 +117,8 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id]; 
-  const templateVars = { id: id, longURL: longURL };
+  // const templateVars = { id: id, longURL: longURL };
+  const templateVars = { id: id, longURL: longURL, username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
 
