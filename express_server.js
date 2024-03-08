@@ -93,7 +93,7 @@ app.get("/hello", (req, res) => {
 
 //route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { email: req.cookies.email };
   res.render("urls_new", templateVars);
 });
 
@@ -108,7 +108,7 @@ app.post("/login", (req, res) => {
 // logged in route
 app.get("/urls", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"],
+    email: req.cookies["email"],
     urls: urlDatabase
   };
   res.render("urls_index", templateVars);
@@ -119,7 +119,7 @@ app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id]; 
   // const templateVars = { id: id, longURL: longURL };
-  const templateVars = { id: id, longURL: longURL, username: req.cookies["username"] };
+  const templateVars = { id: id, longURL: longURL, email: req.cookies.email };
   res.render("urls_show", templateVars);
 });
 
@@ -138,15 +138,15 @@ app.get("/register", (req, res) => {
 // checks for email registrated 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+  res.cookie("email, email");
   for (const userId in users) {
     if (users[userId].email === email) {
       return res.status(400).send("Email already registered");
-      res.redirect("/urls");
     }
   }
   const userId = generateRandomString();
-  users[userId] = { id: userId, email, password,
-  };
+  users[userId] = { id: userId, email, password};
+  res.cookie("email", email);
   res.redirect("/urls");
 });
 
