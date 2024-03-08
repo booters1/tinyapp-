@@ -163,6 +163,11 @@ function getUserByEmail(email) {
   return null;
 }
 
+//route for login 
+app.get("/login", (req, res) => {
+  res.render("login", { email: ""});
+})
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
