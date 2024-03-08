@@ -1,6 +1,7 @@
 
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const users = {};
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -132,6 +133,23 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   res.render("register");
 });
+
+// route for registration form
+// checks for email registrated 
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return res.status(400).send("Email already registered");
+      res.redirect("/urls");
+    }
+  }
+  const userId = generateRandomString();
+  users[userId] = { id: userId, email, password,
+  };
+  res.redirect("/urls");
+});
+
 
 
 app.listen(PORT, () => {
