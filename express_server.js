@@ -138,6 +138,8 @@ app.get("/register", (req, res) => {
 // checks for email registrated 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+
+
   res.cookie("email, email");
   for (const userId in users) {
     if (users[userId].email === email) {
