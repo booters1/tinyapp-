@@ -138,8 +138,9 @@ app.get("/register", (req, res) => {
 // checks for email registrated 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-
-
+  if (!email || !password) {
+    return res.status(400).send("Both email and password fields are required.");
+  }
   res.cookie("email, email");
   for (const userId in users) {
     if (users[userId].email === email) {
