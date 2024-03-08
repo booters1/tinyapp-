@@ -152,7 +152,15 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-
+// email looker upper
+function getUserByEmail(email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+}
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
