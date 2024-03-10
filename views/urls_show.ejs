@@ -19,12 +19,11 @@
   <p>Long URL: <%= longURL %></p>
   <p>Short URL ID: <%= id %></p>
 
-    <!-- Deletion -->
-    <form method="POST" action="/urls/<%= id %>">
-      <label for="newLongURL">New Long URL:</label>
-      <input type="text" id="newLongURL" name="newLongURL" value="<%= longURL %>">
-      <button type="submit">Update</button>
-    </form>
+  <form method="POST" action="/urls/<%= id %>">
+    <label for="updatedLongURL">New Long URL:</label>
+    <input type="text" id="updatedLongURL" name="updatedLongURL" value="<%= longURL %>">
+    <button type="submit">Update</button>
+  </form>
 
 
 </body>

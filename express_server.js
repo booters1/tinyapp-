@@ -32,16 +32,41 @@ const randomString = generateRandomString();
 app.set("view engine", "ejs")
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b6UTxQ": {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  "i3BoGr": {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+};
+
+const urlsForUser = (id) => {
+  const userURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userURLs;
 };
 
 
 
 app.post("/urls", (req, res) => {
+  if (!req.session || !req.session.user_id) {
+    res.status(401).send("Please login or register first.");
+    return;
+  }
+
   const randomString = generateRandomString();
   const longURL = req.body.longURL;
-  urlDatabase[randomString] = longURL; 
+  urlDatabase[randomString] = {
+  longURL: longURL,
+  userID: req.session.user_id
+  };
+
   res.redirect(`/urls/${randomString}`); 
 });
 
@@ -56,25 +81,38 @@ app.get("/u/:id", (req, res) => {
     res.status(404).send("SHORT URL NOT FOUND");
   }
 });
-// Edit route
+// Edit route --> updated: ONLY OWNER CAN EDIT
 app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const newLongURL = req.body.newLongURL; 
-
-  if (urlDatabase[id]) {
-    urlDatabase[id] = newLongURL;
-    res.redirect("/urls");
-  } else {
-    res.status(404).send("Short URL not found");
+  if (!req.session || !req.session.user_id) {
+    res.status(401).send("🛑 Unauthorized User- Create or Login to an account 🛑");
+    return;
   }
+  const shortURL = req.params.id;
+  const userURLs = urlsForUser(req.session.user_id);
+
+  if (!userURLs[shortURL]) {
+    res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
+    return;
+  }
+  const updatedLongURL = req.body.updatedLongURL;
+  urlDatabase[shortURL].longURL = updatedLongURL;
+  res.redirect(`/urls`);
 });
 
 // Delete route
 app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id; 
-  if (urlDatabase[id]) {
-    delete urlDatabase[id];
+  if (!req.session || !req.session.user_id) {
+    res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
+    return;
   }
+  const shortURL = req.params.id;
+  const userURLs = urlsForUser(req.session.user_id);
+  if (!userURLs[shortURL]) {
+    res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
+    return;
+  }
+  
+  delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
 
@@ -94,13 +132,13 @@ app.get("/hello", (req, res) => {
 
 //route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = { email: req.session.email };
+  const templateVars = { email: req.session.user_id };
   res.render("urls_new", templateVars);
 });
 
 //redirect route for already signed in
 app.get("/login", (req, res) => {
-  if (req.session.email) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
     res.render("login", { email: ""});
@@ -127,26 +165,50 @@ app.post("/login", (req, res) => {
     console.log("Hashed password does not match.");
     return;
   }
-
-  req.session.email = email;
+  req.session.user_id = user.id;
+  users[user.id] = user;
+  
   res.redirect("/urls");
 });
 
 // logged in route
 app.get("/urls", (req, res) => {
+  if (!req.session || !req.session.user_id) {
+    res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
+    return;
+  }
+  const userURLs = urlsForUser(req.session.user_id);
+
   const templateVars = {
-    email: req.session["email"],
-    urls: urlDatabase
+    urls: userURLs,
+    email: users[req.session.user_id].email,
+    user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
 });
-
-//route for displaying speicifc URL
+//route for displaying speicifc URL UPDATED: to logged in person onmly
 app.get("/urls/:id", (req, res) => {
+  if (!req.session || !req.session.user_id) {
+    res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
+    return;
+  }
+  const shortURL = req.params.id;
+  const userURLs = urlsForUser(req.session.user_id);
+  
+  if (!userURLs[shortURL]) {
+    res.status(404).send("URL does not belong to this user./");
+    return;
+  }
   const id = req.params.id;
-  const longURL = urlDatabase[id]; 
-  // const templateVars = { id: id, longURL: longURL };
-  const templateVars = { id: id, longURL: longURL, email: req.session.email };
+
+  const templateVars = {
+    shortURL: shortURL,
+    longURL: userURLs[shortURL].longURL,
+    email: req.session.user_id || '',
+    user: users[req.session.user_id],
+    id: id,
+  };
+  console.log(templateVars);
   res.render("urls_show", templateVars);
 });
 
@@ -158,10 +220,10 @@ app.post("/logout", (req, res) => {
 
 // route for register --> added if user is loggedin, redirect
 app.get("/register", (req, res) => {
-  if (req.session.email) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
-    res.render("register", {email: req.session.email });
+    res.render("register", { email: "" });
   }
 });
 
@@ -182,7 +244,8 @@ app.post("/register", (req, res) => {
   }
   const userId = generateRandomString();
   users[userId] = { id: userId, email, password: hashedPassword };
-  req.session.email = email;
+  req.session.user_id = userId;
+  users[userId].email = email;
   res.redirect("/urls");
 });
 
