@@ -257,7 +257,7 @@ const getUserByEmail = (email) => {
       return user;
     }
   }
-  return null; // Return null if user not found
+  return null; //if user not found
 };
 
 
