@@ -2,6 +2,7 @@
 const express = require("express");
 const cookieParser = require('cookie-parser');
 const users = {};
+const bcrypt = require("bcryptjs");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -22,7 +23,7 @@ function generateRandomString(len = 6, charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcd
 }
 
 const randomString = generateRandomString();
-console.log(randomString);
+//console.log(randomString);
 
 app.set("view engine", "ejs")
 
@@ -36,14 +37,10 @@ const urlDatabase = {
 app.post("/urls", (req, res) => {
   const randomString = generateRandomString();
   const longURL = req.body.longURL;
-  urlDatabase[randomString] = longURL; // longURL in urlDatabase
-  res.redirect(`/urls/${randomString}`); // redirect 
+  urlDatabase[randomString] = longURL; 
+  res.redirect(`/urls/${randomString}`); 
 });
 
-// app.get("/urls", (req, res) => {
-//   const templateVars = { urls: urlDatabase };
-//   res.render("urls_index", templateVars);
-// });
 
 // Extract shortURL -> Look up longURL corresponding shortURL in urlDatabase
 app.get("/u/:id", (req, res) => {
@@ -115,9 +112,15 @@ app.post("/login", (req, res) => {
     res.status(403).send("User is not in database.");
     return;
   }
+  //debug code
+  console.log("Hashed password from database:", user.password);
+  console.log("Entered password:", password);
 
-  if (user.password !== password) {
+  if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Invalid password. PLease try again.");
+    //debug code
+    
+    console.log("Hashed password does not match.");
     return;
   }
 
@@ -165,14 +168,16 @@ app.post("/register", (req, res) => {
   if (!email || !password) {
     return res.status(400).send("Both email and password fields are required.");
   }
-  res.cookie("email", email);
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  //res.cookie("email", email);
   for (const userId in users) {
     if (users[userId].email === email) {
       return res.status(400).send("Email already registered");
     }
   }
   const userId = generateRandomString();
-  users[userId] = { id: userId, email, password};
+  users[userId] = { id: userId, email, password: hashedPassword };
   res.cookie("email", email);
   res.redirect("/urls");
 });
