@@ -97,6 +97,15 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+//redirect route for already signed in
+app.get("/login", (req, res) => {
+  if (req.cookies.email) {
+    res.redirect("/urls");
+  } else {
+    res.render("login", { email: ""});
+  }
+});
+
 // route for login 
 app.post("/login", (req, res) => {
   const { email, password} = req.body;
@@ -140,9 +149,13 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-//route for register
+// route for register --> added if user is loggedin, redirect
 app.get("/register", (req, res) => {
-  res.render("register", {email: req.cookies.email });
+  if (req.cookies.email) {
+    res.redirect("/urls");
+  } else {
+    res.render("register", {email: req.cookies.email });
+  }
 });
 
 // route for registration form
