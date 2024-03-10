@@ -1,6 +1,6 @@
 
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const users = {};
 const bcrypt = require("bcryptjs");
 
@@ -9,7 +9,11 @@ const PORT = 8080; // default port 8080
 
 // middleware form data
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['banana']
+}));
 
 //Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 
@@ -90,13 +94,13 @@ app.get("/hello", (req, res) => {
 
 //route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = { email: req.cookies.email };
+  const templateVars = { email: req.session.email };
   res.render("urls_new", templateVars);
 });
 
 //redirect route for already signed in
 app.get("/login", (req, res) => {
-  if (req.cookies.email) {
+  if (req.session.email) {
     res.redirect("/urls");
   } else {
     res.render("login", { email: ""});
@@ -124,14 +128,14 @@ app.post("/login", (req, res) => {
     return;
   }
 
-  res.cookie("email", email);
+  req.session.email = email;
   res.redirect("/urls");
 });
 
 // logged in route
 app.get("/urls", (req, res) => {
   const templateVars = {
-    email: req.cookies["email"],
+    email: req.session["email"],
     urls: urlDatabase
   };
   res.render("urls_index", templateVars);
@@ -142,22 +146,22 @@ app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id]; 
   // const templateVars = { id: id, longURL: longURL };
-  const templateVars = { id: id, longURL: longURL, email: req.cookies.email };
+  const templateVars = { id: id, longURL: longURL, email: req.session.email };
   res.render("urls_show", templateVars);
 });
 
 // route for logout (clears cookies and redirect)
 app.post("/logout", (req, res) => {
-  res.clearCookie("email");
+  req.session = null;
   res.redirect("/login");
 });
 
 // route for register --> added if user is loggedin, redirect
 app.get("/register", (req, res) => {
-  if (req.cookies.email) {
+  if (req.session.email) {
     res.redirect("/urls");
   } else {
-    res.render("register", {email: req.cookies.email });
+    res.render("register", {email: req.session.email });
   }
 });
 
@@ -170,7 +174,7 @@ app.post("/register", (req, res) => {
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  //res.cookie("email", email);
+
   for (const userId in users) {
     if (users[userId].email === email) {
       return res.status(400).send("Email already registered");
@@ -178,7 +182,7 @@ app.post("/register", (req, res) => {
   }
   const userId = generateRandomString();
   users[userId] = { id: userId, email, password: hashedPassword };
-  res.cookie("email", email);
+  req.session.email = email;
   res.redirect("/urls");
 });
 
