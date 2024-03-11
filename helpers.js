@@ -5,7 +5,6 @@ const getUserByEmail = function(email, usersDatabase) {
       return user;
     }
   }
-  return undefined; // Return undefined if user not found
 };
 
 module.exports = { getUserByEmail };

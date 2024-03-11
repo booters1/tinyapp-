@@ -53,7 +53,13 @@ app.post("/urls", (req, res) => {
   }
 
   const randomString = generateRandomString();
-  const longURL = req.body.longURL;
+  let longURL = req.body.longURL;
+
+  //fool proof case for if user doesnt use http:// 
+  if (!longURL.startsWith('http://')) {
+    longURL = 'http://' + longURL;
+  }
+
   urlDatabase[randomString] = {
   longURL: longURL,
   userID: req.session.user_id
@@ -64,8 +70,9 @@ app.post("/urls", (req, res) => {
 // route: redirect to long url
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
-  if (longURL) {
+  const longURLObject  = urlDatabase[shortURL];
+  if (longURLObject) {
+    const longURL = longURLObject.longURL;
     res.redirect(longURL);
   } else {
     res.status(404).send("SHORT URL NOT FOUND");
