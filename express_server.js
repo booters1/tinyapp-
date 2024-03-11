@@ -5,18 +5,15 @@ const users = {};
 const bcrypt = require("bcryptjs");
 
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 
 // middleware form data
 app.use(express.urlencoded({ extended: true }));
-
 app.use(cookieSession({
   name: 'session',
-  keys: ['banana']
+  keys: ['bananaman1998']
 }));
-
-//Borrowed source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
-
+// source code and tailored to tinyapp https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 function generateRandomString(len = 6, charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
   let randomString = '';
   for (let i = 0; i < len; i++) {
@@ -25,12 +22,8 @@ function generateRandomString(len = 6, charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcd
   }
   return randomString;
 }
-
 const randomString = generateRandomString();
-//console.log(randomString);
-
 app.set("view engine", "ejs")
-
 const urlDatabase = {
   "b6UTxQ": {
     longURL: "https://www.tsn.ca",
@@ -41,7 +34,7 @@ const urlDatabase = {
     userID: "aJ48lW",
   },
 };
-
+// filter urls by ownership
 const urlsForUser = (id) => {
   const userURLs = {};
   for (const shortURL in urlDatabase) {
@@ -51,9 +44,7 @@ const urlsForUser = (id) => {
   }
   return userURLs;
 };
-
-
-
+// route: creating new url
 app.post("/urls", (req, res) => {
   if (!req.session || !req.session.user_id) {
     res.status(401).send("Please login or register first.");
@@ -69,9 +60,7 @@ app.post("/urls", (req, res) => {
 
   res.redirect(`/urls/${randomString}`); 
 });
-
-
-// Extract shortURL -> Look up longURL corresponding shortURL in urlDatabase
+// route: redirect to long url
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
@@ -81,7 +70,7 @@ app.get("/u/:id", (req, res) => {
     res.status(404).send("SHORT URL NOT FOUND");
   }
 });
-// Edit route --> updated: ONLY OWNER CAN EDIT
+// Edit route (ONLY OWNER CAN EDIT)
 app.post("/urls/:id", (req, res) => {
   if (!req.session || !req.session.user_id) {
     res.status(401).send("🛑 Unauthorized User- Create or Login to an account 🛑");
@@ -98,8 +87,7 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[shortURL].longURL = updatedLongURL;
   res.redirect(`/urls`);
 });
-
-// Delete route
+// Delete route (ONLY OWNER CAN DELETE)
 app.post("/urls/:id/delete", (req, res) => {
   if (!req.session || !req.session.user_id) {
     res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
@@ -111,31 +99,18 @@ app.post("/urls/:id/delete", (req, res) => {
     res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
     return;
   }
-  
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-
+// get url database in JSON format
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-
-app.get("/hello", (req, res) => {
-  const templateVars = { greeting: "Hello World!" };
-  res.render("hello_world", templateVars);
-});
-
 //route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
   const templateVars = { email: req.session.user_id };
   res.render("urls_new", templateVars);
 });
-
 //redirect route for already signed in
 app.get("/login", (req, res) => {
   if (req.session.user_id) {
@@ -154,15 +129,9 @@ app.post("/login", (req, res) => {
     res.status(403).send("User is not in database.");
     return;
   }
-  //debug code
-  console.log("Hashed password from database:", user.password);
-  console.log("Entered password:", password);
 
   if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Invalid password. PLease try again.");
-    //debug code
-    
-    console.log("Hashed password does not match.");
     return;
   }
   req.session.user_id = user.id;
@@ -171,7 +140,7 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
-// logged in route
+// logged in route (display urls)
 app.get("/urls", (req, res) => {
   if (!req.session || !req.session.user_id) {
     res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
@@ -186,7 +155,8 @@ app.get("/urls", (req, res) => {
   };
   res.render("urls_index", templateVars);
 });
-//route for displaying speicifc URL UPDATED: to logged in person onmly
+
+//route for displaying specific URL (logged in person only)
 app.get("/urls/:id", (req, res) => {
   if (!req.session || !req.session.user_id) {
     res.status(401).send("🛑 Unauthorized User- Create or login to an account 🛑");
@@ -200,7 +170,6 @@ app.get("/urls/:id", (req, res) => {
     return;
   }
   const id = req.params.id;
-
   const templateVars = {
     shortURL: shortURL,
     longURL: userURLs[shortURL].longURL,
@@ -232,11 +201,11 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).send("Both email and password fields are required.");
+    return res.status(400).send("Both email and password fields needed.");
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-
+// check for already registered user
   for (const userId in users) {
     if (users[userId].email === email) {
       return res.status(400).send("Email already registered");
@@ -260,12 +229,7 @@ const getUserByEmail = (email) => {
   return null; //if user not found
 };
 
-
-//route for login 
-app.get("/login", (req, res) => {
-  res.render("login", { email: ""});
-})
-
+// starts the server
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
