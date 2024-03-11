@@ -108,9 +108,14 @@ app.get("/urls.json", (req, res) => {
 });
 //route for displaying form to add new URL
 app.get("/urls/new", (req, res) => {
-  const templateVars = { email: req.session.user_id };
+  if (!req.session || !req.session.user_id) {
+    res.status(401).send("🛑 Please log in to create a new URL 🛑");
+    return;
+  }
+  const templateVars = { email: users[req.session.user_id].email };
   res.render("urls_new", templateVars);
 });
+
 //redirect route for already signed in
 app.get("/login", (req, res) => {
   if (req.session.user_id) {
@@ -123,7 +128,7 @@ app.get("/login", (req, res) => {
 // route for login 
 app.post("/login", (req, res) => {
   const { email, password} = req.body;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   
   if (!user) {
     res.status(403).send("User is not in database.");
@@ -147,10 +152,11 @@ app.get("/urls", (req, res) => {
     return;
   }
   const userURLs = urlsForUser(req.session.user_id);
+  const email = users[req.session.user_id].email;
 
   const templateVars = {
     urls: userURLs,
-    email: users[req.session.user_id].email,
+    email: email,
     user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
@@ -170,10 +176,12 @@ app.get("/urls/:id", (req, res) => {
     return;
   }
   const id = req.params.id;
+  const email = users[req.session.user_id].email;
+
   const templateVars = {
     shortURL: shortURL,
     longURL: userURLs[shortURL].longURL,
-    email: req.session.user_id || '',
+    email: email,
     user: users[req.session.user_id],
     id: id,
   };
@@ -219,15 +227,16 @@ app.post("/register", (req, res) => {
 });
 
 // email looker upper
-const getUserByEmail = (email) => {
-  for (const userId in users) {
-    const user = users[userId];
+const getUserByEmail = function(email, usersDatabase) {
+  for (const userId in usersDatabase) {
+    const user = usersDatabase[userId];
     if (user.email === email) {
       return user;
     }
   }
-  return null; //if user not found
+  return null; // Return null if user not found
 };
+
 
 // starts the server
 app.listen(PORT, () => {
