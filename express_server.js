@@ -3,6 +3,7 @@ const express = require("express");
 const cookieSession = require('cookie-session');
 const users = {};
 const bcrypt = require("bcryptjs");
+const { getUserByEmail } = require("./helpers");
 
 const app = express();
 const PORT = 8080;
@@ -225,18 +226,6 @@ app.post("/register", (req, res) => {
   users[userId].email = email;
   res.redirect("/urls");
 });
-
-// email looker upper
-const getUserByEmail = function(email, usersDatabase) {
-  for (const userId in usersDatabase) {
-    const user = usersDatabase[userId];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null; // Return null if user not found
-};
-
 
 // starts the server
 app.listen(PORT, () => {
