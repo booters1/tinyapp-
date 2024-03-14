@@ -17,7 +17,7 @@
   <h1>URL Details</h1>
   
   <p>Long URL: <%= longURL %></p>
-  <p>Short URL ID: <%= id %></p>
+  <p>Short URL ID: <a href="/u/<%= id %>" target="_blank"><%= id %></a></p>
 
   <form method="POST" action="/urls/<%= id %>">
     <label for="updatedLongURL">New Long URL:</label>
