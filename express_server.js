@@ -47,8 +47,8 @@ const urlsForUser = (id) => {
 };
 
 //added homepage should always redirect to login
-app.post("/home", (req, res) => {
-  res.redirect(`/login`);
+app.get("/", (req, res) => {
+  res.redirect("/login");
 });
 
 // route: creating new url
